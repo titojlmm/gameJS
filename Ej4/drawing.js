@@ -55,21 +55,21 @@ function draw_pacman(ctx, x, y, rad, openness) {
 
 /*
   ctx Canvas context
-  (x,y) Coordinates of the center of the ship
+  (x,y) Coordinates of the center of the ship => (0, 0) ya que se hará una translación sobre el centro
   radious Radious of the circle containing the ship
   options Object with options to display the ship:
           guide to collision, default values for width, stroke color, fill color, angle
 */
-function draw_ship(ctx, x, y, radius, options) {
+function draw_ship(ctx, radius, options) {
   options = options || {};
-  ctx.save();
+  ctx.save();
   // optionally draw a guide showing the collision radius
   if(options.guide) {
     ctx.strokeStyle = "white";
     ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
     ctx.lineWidth = 0.5;
     ctx.beginPath();
-    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+    ctx.arc(0, 0, radius, 0, 2 * Math.PI);
     ctx.stroke();
     ctx.fill();
   }
@@ -78,19 +78,64 @@ function draw_ship(ctx, x, y, radius, options) {
   ctx.strokeStyle = options.stroke || "white";
   ctx.fillStyle = options.fill || "black";
   let angle = (options.angle || 0.5 * Math.PI) / 2;
+  let curve1 = options.curve1 || 0.25;
+  let curve2 = options.curve2 || 0.75;
   // draw the ship in three lines
   ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(
-    x + Math.cos(Math.PI - angle) * radius,
-    y + Math.sin(Math.PI - angle) * radius
+  ctx.moveTo(radius, 0);
+  // Hacemos que las línes de la nave sean todas curvas (ya no podemos usar closePath para la última)
+  ctx.quadraticCurveTo(
+    Math.cos(angle) * radius * curve2,
+    Math.sin(angle) * radius * curve2,
+    Math.cos(Math.PI - angle) * radius,
+    Math.sin(Math.PI - angle) * radius
   );
-  ctx.lineTo(
-    x + Math.cos(Math.PI + angle) * radius,
-    y + Math.sin(Math.PI + angle) * radius
+  ctx.quadraticCurveTo(-radius * curve1, 0,
+    Math.cos(Math.PI + angle) * radius,
+    Math.sin(Math.PI + angle) * radius
   );
-  ctx.closePath();
+  ctx.quadraticCurveTo(
+    Math.cos(-angle) * radius * curve2,
+    Math.sin(-angle) * radius * curve2,
+    radius, 0
+  );
   ctx.fill();
   ctx.stroke();
+  // a new guide line and circle show the control point
+  if(options.guide) {
+    ctx.strokeStyle = "white";
+    ctx.fillStyle = "white";
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(
+      Math.cos(-angle) * radius,
+      Math.sin(-angle) * radius
+    );
+    ctx.lineTo(0, 0);
+    ctx.lineTo(
+      Math.cos(angle) * radius,
+      Math.sin(angle) * radius
+    );
+    ctx.moveTo(-radius, 0);
+    ctx.lineTo(0, 0);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(
+      Math.cos(angle) * radius * curve2,
+      Math.sin(angle) * radius * curve2,
+      radius/40, 0, 2 * Math.PI
+    );
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(
+      Math.cos(-angle) * radius * curve2,
+      Math.sin(-angle) * radius * curve2,
+      radius/40, 0, 2 * Math.PI
+    );
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(radius * curve1 - radius, 0, radius/50, 0, 2 * Math.PI);
+    ctx.fill();
+  }
   ctx.restore();
 }
