@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Inheritance</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="drawing.js"></script>
+    <script src="objects.js"></script>
+  </head>
+  <body>
+    <h1>Inheritance</h1>
+    <canvas id="asteroids" width="600" height="600" tabindex="1"></canvas>
+    <script>
+      'use strict';
+      var context = document.getElementById("asteroids").getContext("2d");
+
+      var asteroid = new Asteroid(
+        Math.random() * context.canvas.width,
+        Math.random() * context.canvas.height,
+        10000
+      );
+      asteroid.push(Math.random() * 2 * Math.PI, 1000, 60);
+      asteroid.twist(Math.random() * 100, 60);
+
+      var ship = new Ship(context.canvas.width / 2, context.canvas.height / 2, 10, 15, 1000, 200);
+      var projectiles = []; // new array
+
+      var guide = true;
+
+      function draw(ctx) {
+        if (guide) {
+          draw_grid(context);
+        }
+        ship.draw(context, guide);
+        projectiles.forEach(function(projectil) {
+          projectil.draw(context);
+        });
+        asteroid.draw(context, guide);
+      }
+
+      function update(elapsed) {
+        asteroid.update(elapsed, context);
+        ship.update(elapsed, context);
+        projectiles.forEach(function(projectile, i, projectiles) {
+          projectile.update(elapsed, context);
+          if(projectile.life <= 0) {
+            projectiles.splice(i, 1);
+          }
+        });
+        if(ship.trigger && ship.loaded) {
+          projectiles.push(ship.projectile(elapsed));
+        }
+      }
+
+      var previous;
+      function frame(timestamp) {
+        if (!previous) previous = timestamp;
+        var elapsed = timestamp - previous;
+        context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+        update(elapsed/1000);
+        draw(context);
+        previous = timestamp;
+        window.requestAnimationFrame(frame);
+      }
+      window.requestAnimationFrame(frame);
+
+      context.canvas.addEventListener("keydown", function(e) {
+        key_handler(e, true);
+      }, true);
+      context.canvas.addEventListener("keyup", function(e) {
+        key_handler(e, false);
+      }, true);
+      context.canvas.focus();
+    </script>
+  </body>
+</html>
